@@ -1,0 +1,13 @@
+cabal-version:       2.2
+name:                file-rename
+version:             0
+license:             BSD-2-Clause
+author:              Martin J. Schreiner
+build-type:          Simple
+
+executable file-rename
+  default-language:     Haskell2010
+  ghc-options:          -Wall -Wcompat -Wincomplete-uni-patterns -Wredundant-constraints
+                        -Wincomplete-record-updates -Wunused-packages -threaded
+  main-is:              Main.hs
+  build-depends:        base <5, directory, filepath
