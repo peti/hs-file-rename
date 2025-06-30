@@ -54,11 +54,11 @@ isRenamed file prefix =
        Nothing -> False
 
 getRenamed :: [FilePath] -> String -> [FilePath]
-getRenamed files prefix = [f | f <- files, isRenamed f prefix]
+getRenamed files prefix = filter (flip isRenamed prefix) files
 
 
 getNonRenamed :: [FilePath] -> String -> [FilePath]
-getNonRenamed files prefix = [f | f <- files, not (isRenamed f prefix)]
+getNonRenamed files prefix = filter (flip isRenamed prefix) files
 
 
 getUsedNumbers :: [FilePath] -> String -> [Int]
