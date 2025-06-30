@@ -6,35 +6,39 @@ import Text.Read (readMaybe)
 import Control.Monad (filterM)
 import Data.List ( partition )
 
+newtype Path = Path { getPath :: FilePath } deriving (Show)
+
 main :: IO ()
 main = do
-  currentDir <- getCurrentDirectory
+  currentDir <- Path <$> getCurrentDirectory
   actions <- processDirectory currentDir
   if null actions
     then putStrLn "No files to rename."
     else do
       putStrLn "Will rename:"
-      mapM_ (\(old, new) -> putStrLn ("  " ++ old ++ " -> " ++ new)) actions
+      mapM_ (\(old, new) -> putStrLn ("  " ++ getPath old ++ " -> " ++ getPath new)) actions
       putStr "Proceed? (y/n): "
       hFlush stdout
       answer <- getLine
       if answer == "y"
         then do
-          mapM_ (\(old, new) -> renameFile old new) actions
+          mapM_ (\(old, new) -> renameFile (getPath old) (getPath new)) actions
           putStrLn "Files renamed."
         else
           putStrLn "Operation cancelled."
 
 
-processDirectory :: FilePath -> IO [(FilePath, FilePath)]
+processDirectory :: Path -> IO [(Path, Path)]
 processDirectory path = do
-  entries <- listDirectory path
-  let fullPaths = map (path </>) entries
+  entries <- fmap (map Path) (listDirectory (getPath path))
+  let
+    fullPaths :: [Path]
+    fullPaths = [ Path (getPath path </> p) | Path p <- entries ]
 
-  files <- filterM doesFileExist fullPaths
-  dirs  <- filterM doesDirectoryExist fullPaths
+  files <- filterM (doesFileExist . getPath) fullPaths
+  dirs  <- filterM (doesDirectoryExist . getPath) fullPaths
 
-  let dirName = takeFileName path
+  let dirName = takeFileName (getPath path)
   let (renamed,toRename) = partition (isRenamed dirName) files
   let usedNumbers = getUsedNumbers renamed dirName
   let startNumber = if null usedNumbers then 0 else maximum usedNumbers + 1
@@ -44,26 +48,18 @@ processDirectory path = do
   return (renamesHere ++ concat subRenames)
 
 
-isRenamed :: String -> FilePath -> Bool
+isRenamed :: String -> Path -> Bool
 isRenamed prefix file =
-  let name = dropExtension (takeFileName file)
+  let name = dropExtension (takeFileName (getPath file))
       expectedStart = prefix ++ "_"
   in case stripPrefix expectedStart name of
        Just rest -> all isDigit rest
        Nothing -> False
 
-getRenamed :: [FilePath] -> String -> [FilePath]
-getRenamed files prefix = filter (isRenamed prefix) files
-
-
-getNonRenamed :: [FilePath] -> String -> [FilePath]
-getNonRenamed files prefix = filter (isRenamed prefix) files
-
-
-getUsedNumbers :: [FilePath] -> String -> [Int]
+getUsedNumbers :: [Path] -> String -> [Int]
 getUsedNumbers [] _ = []
 getUsedNumbers (f:fs) prefix =
-  let name = dropExtension (takeFileName f)
+  let name = dropExtension (takeFileName (getPath f))
       prefixWithUnderscore = prefix ++ "_"
   in case stripPrefix prefixWithUnderscore name of
        Just numStr -> case readMaybe numStr of
@@ -72,13 +68,13 @@ getUsedNumbers (f:fs) prefix =
        Nothing -> getUsedNumbers fs prefix
 
 
-makeNewNames :: [FilePath] -> String -> Int -> [(FilePath, FilePath)]
+makeNewNames :: [Path] -> String -> Int -> [(Path, Path)]
 makeNewNames [] _ _ = []
 makeNewNames (f:fs) prefix n =
-  let ext = takeExtension f
-      dir = takeDirectory f
+  let ext = takeExtension (getPath f)
+      dir = takeDirectory (getPath f)
       newName = prefix ++ "_" ++ show n ++ ext
-      fullNew = dir </> newName
+      fullNew = Path (dir </> newName)
   in (f, fullNew) : makeNewNames fs prefix (n + 1)
 
 
