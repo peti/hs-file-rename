@@ -32,7 +32,7 @@ main = do
 
 processDirectory :: Path -> IO [(Path, Path)]
 processDirectory path = do
-  entries <- fmap (map Path) (listDirectory (getPath path))
+  entries <- map Path <$> listDirectory (getPath path)
   let
     fullPaths :: [Path]
     fullPaths = [ Path (getPath path </> p) | Path p <- entries ]
@@ -53,7 +53,7 @@ processDirectory path = do
 isRenamed :: Prefix -> Path -> Bool
 isRenamed prefix file =
   let name = dropExtension (takeFileName (getPath file))
-      expectedStart = (getPrefix prefix) ++ "_"
+      expectedStart = getPrefix prefix ++ "_"
   in case stripPrefix expectedStart name of
        Just rest -> all isDigit rest
        Nothing -> False
