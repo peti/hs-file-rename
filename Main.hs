@@ -41,8 +41,8 @@ processDirectory path = do
   dirs  <- filterM (doesDirectoryExist . getPath) fullPaths
 
   let dirName = Prefix (takeFileName (getPath path))
-  let (renamed,toRename) = partition (isRenamed (dirName)) files
-  let usedNumbers = getUsedNumbers renamed (dirName)
+  let (renamed,toRename) = partition (isRenamed dirName) files
+  let usedNumbers = getUsedNumbers renamed dirName
   let startNumber = if null usedNumbers then 0 else maximum usedNumbers + 1
   let renamesHere = makeNewNames toRename dirName startNumber
 
