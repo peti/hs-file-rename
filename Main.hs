@@ -40,9 +40,9 @@ processDirectory path = do
   files <- filterM (doesFileExist . getPath) fullPaths
   dirs  <- filterM (doesDirectoryExist . getPath) fullPaths
 
-  let dirName = takeFileName (getPath path)
-  let (renamed,toRename) = partition (isRenamed (Prefix dirName)) files
-  let usedNumbers = getUsedNumbers renamed (Prefix dirName)
+  let dirName = Prefix (takeFileName (getPath path))
+  let (renamed,toRename) = partition (isRenamed (dirName)) files
+  let usedNumbers = getUsedNumbers renamed (dirName)
   let startNumber = if null usedNumbers then 0 else maximum usedNumbers + 1
   let renamesHere = makeNewNames toRename dirName startNumber
 
@@ -70,12 +70,12 @@ getUsedNumbers (f:fs) prefix =
        Nothing -> getUsedNumbers fs prefix
 
 
-makeNewNames :: [Path] -> String -> Int -> [(Path, Path)]
+makeNewNames :: [Path] -> Prefix -> Int -> [(Path, Path)]
 makeNewNames [] _ _ = []
 makeNewNames (f:fs) prefix n =
   let ext = takeExtension (getPath f)
       dir = takeDirectory (getPath f)
-      newName = prefix ++ "_" ++ show n ++ ext
+      newName = getPrefix prefix ++ "_" ++ show n ++ ext
       fullNew = Path (dir </> newName)
   in (f, fullNew) : makeNewNames fs prefix (n + 1)
 
