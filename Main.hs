@@ -34,11 +34,11 @@ processDirectory path = do
   dirs  <- filterM doesDirectoryExist fullPaths
 
   let dirName = takeFileName path
-  renamed <- getRenamed files dirName
+  let renamed = getRenamed files dirName
   let usedNumbers = getUsedNumbers renamed dirName
   let startNumber = if null usedNumbers then 0 else maximum usedNumbers + 1
 
-  toRename <- getNonRenamed files dirName
+  let toRename = getNonRenamed files dirName
   let renamesHere = makeNewNames toRename dirName startNumber
 
   subRenames <- mapM processDirectory dirs
@@ -53,13 +53,12 @@ isRenamed file prefix =
        Just rest -> all isDigit rest
        Nothing -> False
 
+getRenamed :: [FilePath] -> String -> [FilePath]
+getRenamed files prefix = [f | f <- files, isRenamed f prefix]
 
-getRenamed :: [FilePath] -> String -> IO [FilePath]
-getRenamed files prefix = return [f | f <- files, isRenamed f prefix]
 
-
-getNonRenamed :: [FilePath] -> String -> IO [FilePath]
-getNonRenamed files prefix = return [f | f <- files, not (isRenamed f prefix)]
+getNonRenamed :: [FilePath] -> String -> [FilePath]
+getNonRenamed files prefix = [f | f <- files, not (isRenamed f prefix)]
 
 
 getUsedNumbers :: [FilePath] -> String -> [Int]
