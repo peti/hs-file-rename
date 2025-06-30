@@ -35,7 +35,7 @@ processDirectory path = do
   dirs  <- filterM doesDirectoryExist fullPaths
 
   let dirName = takeFileName path
-  let (renamed,toRename) = partition (`isRenamed` dirName) files
+  let (renamed,toRename) = partition (isRenamed dirName) files
   let usedNumbers = getUsedNumbers renamed dirName
   let startNumber = if null usedNumbers then 0 else maximum usedNumbers + 1
   let renamesHere = makeNewNames toRename dirName startNumber
@@ -44,8 +44,8 @@ processDirectory path = do
   return (renamesHere ++ concat subRenames)
 
 
-isRenamed :: FilePath -> String -> Bool
-isRenamed file prefix =
+isRenamed :: String -> FilePath -> Bool
+isRenamed prefix file =
   let name = dropExtension (takeFileName file)
       expectedStart = prefix ++ "_"
   in case stripPrefix expectedStart name of
@@ -53,11 +53,11 @@ isRenamed file prefix =
        Nothing -> False
 
 getRenamed :: [FilePath] -> String -> [FilePath]
-getRenamed files prefix = filter (flip isRenamed prefix) files
+getRenamed files prefix = filter (isRenamed prefix) files
 
 
 getNonRenamed :: [FilePath] -> String -> [FilePath]
-getNonRenamed files prefix = filter (flip isRenamed prefix) files
+getNonRenamed files prefix = filter (isRenamed prefix) files
 
 
 getUsedNumbers :: [FilePath] -> String -> [Int]
