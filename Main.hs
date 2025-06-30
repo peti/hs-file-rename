@@ -4,6 +4,7 @@ import System.IO
 import Data.Char (isDigit)
 import Text.Read (readMaybe)
 import Control.Monad (filterM)
+import Data.List ( partition )
 
 main :: IO ()
 main = do
@@ -34,11 +35,9 @@ processDirectory path = do
   dirs  <- filterM doesDirectoryExist fullPaths
 
   let dirName = takeFileName path
-  let renamed = getRenamed files dirName
+  let (renamed,toRename) = partition (`isRenamed` dirName) files
   let usedNumbers = getUsedNumbers renamed dirName
   let startNumber = if null usedNumbers then 0 else maximum usedNumbers + 1
-
-  let toRename = getNonRenamed files dirName
   let renamesHere = makeNewNames toRename dirName startNumber
 
   subRenames <- mapM processDirectory dirs
